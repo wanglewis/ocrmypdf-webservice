@@ -1,32 +1,33 @@
 FROM python:3.9-slim
 
-# 系统依赖 + 中文字体
-RUN apt-get update && apt-get install -y \
+# 设置非交互模式，防止 tzdata 之类的软件包安装时卡住
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-chi-sim \
     tesseract-ocr-eng \
     ghostscript \
     poppler-utils \
-    fonts-wqy-zenhei \  # 文泉驿中文字体
     && rm -rf /var/lib/apt/lists/*
 
-# 创建非root用户
-RUN useradd -m -u 1000 ocruser
+# 设定工作目录
 WORKDIR /app
-RUN chown ocruser:ocruser /app
 
-USER ocruser
+# 复制并安装 Python 依赖
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
 
-COPY --chown=ocruser:ocruser app/requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
+# 复制应用代码
+COPY app/ .
 
-COPY --chown=ocruser:ocruser app/ .
-
-# 性能优化
+# 设置 Python 运行环境
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    UVICORN_WORKERS=4
+    PYTHONPATH=/app
 
+# 暴露端口
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]
+# 运行 FastAPI 服务器
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
