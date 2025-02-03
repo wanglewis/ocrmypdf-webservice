@@ -42,7 +42,7 @@ ENV PATH="/home/ocruser/.local/bin:${PATH}"
 
 # 复制应用文件
 COPY --chown=ocruser:ocruser app/ ./app
-COPY --chown=ocruser:ocruser static/ ./static
+COPY --chown=ocruser:ocruser app/static/ ./static
 
 # 环境配置
 ENV PYTHONPATH=/app \
