@@ -172,8 +172,7 @@ async def process_pdf(file: UploadFile = File(...), websocket: WebSocket = None)
         processor = OCRProcessor(
             task_id=task_id,
             input_path=input_path,
-            output_path=output_path,
-            websocket=websocket
+            output_path=output_path
         )
         
         # 正确调用（无参数）
@@ -192,7 +191,11 @@ async def process_pdf(file: UploadFile = File(...), websocket: WebSocket = None)
         )
         
     except Exception as e:
-        logger.error(f"处理失败：{str(e)}")
+        logger.error(f"处理失败: {str(e)}", extra={
+            "task_id": self.task_id,
+            "input_path": str(self.input_path),
+            "output_path": str(self.output_path)
+        })
         raise HTTPException(500, f"处理失败：{str(e)}")
         
     finally:
