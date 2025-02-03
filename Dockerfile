@@ -1,10 +1,15 @@
 # 第一阶段：构建依赖
 FROM python:3.11-slim-bookworm as builder
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+# 第一阶段：安装构建工具和依赖
+WORKDIR /builder
+COPY --from=builder /root/.local /home/ocruser/.local --chown=ocruser:ocruser
+
+RUN apt-get update && \
+    apt-get install -y tar gzip && \
+    mkdir -p /app/uploads && \
+    chown -R ocruser:ocruser /app/uploads && \
+    chmod 775 /app/uploads
 
 WORKDIR /app
 COPY app/requirements.txt .
