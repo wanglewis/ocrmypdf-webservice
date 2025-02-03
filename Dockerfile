@@ -23,7 +23,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 创建有写入权限的临时目录
-RUN mkdir -p /tmp/uploads && chmod 777 /tmp/uploads
+RUN mkdir -p /tmp/uploads && \
+    chown -R www-data:www-data /tmp/uploads && \
+    chmod -R 777 /tmp/uploads
+	
+ENV OCRMYPDF_DISABLE_DOCKER=1  # 重要：防止ocrmypdf尝试二次容器化
 
 EXPOSE 5000
 
