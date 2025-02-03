@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-chi-sim \
     tesseract-ocr-eng \
+    tesseract-ocr-deu \ 
     ghostscript \
     poppler-utils \
     libxml2-dev \
@@ -17,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     libopenjp2-7-dev \
     libpng-dev \
     qpdf \
+	pngquant \          
+    unpaper \         
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
