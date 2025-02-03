@@ -3,54 +3,16 @@ version: '3.8'
 services:
   ocr-service:
     build: .
-    container_name: ocr-web-service
+    environment:
+      OCR_ARGS: "-l eng+deu+chi_sim --rotate-pages --deskew --title 'Processed Document' --jobs 4 --output-type pdfa"
     ports:
       - "8000:8000"
     volumes:
-      - uploads:/tmp/uploads  # 持久化存储上传文件
-    environment:
-      - OCRMYPDF_ARGS=-l chi_sim+eng --force-ocr --optimize 3  # 可自定义OCR参数
-      - MAX_FILE_SIZE=52428800  # 50MB文件限制
-      - UVICORN_WORKERS=4  # 根据CPU核心数调整
+      - ./output:/tmp/output  # 持久化输出目录
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 2G
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - ocr-net
-
-  # Redis 用于异步任务队列（可选）
-  redis:
-    image: redis:alpine
-    container_name: ocr-redis
-    ports:
-      - "6379:6379"
-    networks:
-      - ocr-net
-    volumes:
-      - redis_data:/data
-
-  # Prometheus 监控（可选）
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: ocr-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - ocr-net
+          cpus: '4'  # 与 --jobs 4 匹配
 
 volumes:
-  uploads:
-  redis_data:
-
-networks:
-  ocr-net:
-    driver: bridge
+  output:
