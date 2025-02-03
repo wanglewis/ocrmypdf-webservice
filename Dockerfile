@@ -21,6 +21,7 @@ USER ocruser
 COPY --chown=ocruser:ocruser app/requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
+COPY --chown=ocruser:ocruser app/static ./static
 COPY --chown=ocruser:ocruser app/ .
 
 # 性能优化
