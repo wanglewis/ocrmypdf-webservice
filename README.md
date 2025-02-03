@@ -6,7 +6,7 @@ AI generate Code
 ## 快速启动
 ```bash
 # 使用 Docker Hub 镜像
-docker run -p 8000:8000 wanglewis/ocrmypdf-webservice
+docker run -p 8000:8000 wanglewis/ocr-webservice
 
 # 或从源码构建
 docker-compose up --build
