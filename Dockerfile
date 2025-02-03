@@ -30,14 +30,15 @@ RUN apt-get update && apt-get install -y \
 # 创建应用用户和目录
 RUN useradd -m -u 1000 ocruser && \
     mkdir -p /app/uploads && \
-    chown -R ocruser:ocruser /app/uploads
-
+    chown -R ocruser:ocruser /app/uploads && \
+    chmod 775 /app/uploads
+	
 WORKDIR /app
 USER ocruser
 
-# 从构建阶段复制依赖
+# 从构建阶段复制依赖，并确保权限正确
 COPY --from=builder /root/.local /home/ocruser/.local
-ENV PATH="/home/ocruser/.local/bin:${PATH}"
+RUN chown -R ocruser:ocruser /home/ocruser/.local
 
 # 复制应用文件
 COPY --chown=ocruser:ocruser app/ ./app
