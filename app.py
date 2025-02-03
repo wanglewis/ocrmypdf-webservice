@@ -78,7 +78,7 @@ def index():
 
             # 执行 OCR 命令
             result = subprocess.run(
-                ['ocrmypdf', '-l', 'eng+chi_sim', '--deskew', original_path, output_path],
+                ['ocrmypdf', '-l', 'eng+chi_sim','--skip-text', '--deskew', original_path, output_path],
                 capture_output=True,
                 text=True,
                 check=True
