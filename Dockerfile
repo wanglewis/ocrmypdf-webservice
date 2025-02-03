@@ -27,7 +27,8 @@ RUN mkdir -p /tmp/uploads && \
     chown -R www-data:www-data /tmp/uploads && \
     chmod -R 777 /tmp/uploads
 	
-ENV OCRMYPDF_DISABLE_DOCKER=1  # 重要：防止ocrmypdf尝试二次容器化
+	
+ENV OCRMYPDF_DISABLE_DOCKER=1  
 
 EXPOSE 5000
 
