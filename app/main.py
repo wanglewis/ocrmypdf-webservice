@@ -5,7 +5,7 @@ import logging
 import asyncio
 from pathlib import Path
 from typing import Optional
-from ocr_processor import OCRProcessor
+from app.ocr_processor import OCRProcessor
 from fastapi import FastAPI, File, UploadFile, HTTPException, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
