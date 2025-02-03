@@ -40,7 +40,18 @@ def save_upload(file, save_path):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        upload_dir = None  # 初始化用于 finally 清理
+        # ===== 修改点1：提前获取文件对象 =====
+        upload_file = request.files.get('file')  # 使用 get 避免 KeyError
+        #upload_dir = None   初始化用于 finally 清理
+        # ===== 修改点2：统一错误处理流程 =====
+        if not upload_file or upload_file.filename == '':
+            app.logger.error("无效的文件上传请求")
+            return render_template('error.html', message="请选择有效的文件"), 400
+            
+        if not allowed_file(upload_file.filename):
+            return render_template('error.html', message="仅支持 PDF 文件"), 400
+            
+        # ===== 修改点3：确保单次请求处理 =====    
         try:
             # === 基础验证 ===
             if 'file' not in request.files:
