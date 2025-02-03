@@ -18,16 +18,17 @@ RUN chown ocruser:ocruser /app
 
 USER ocruser
 
-COPY --chown=ocruser:ocruser app/requirements.txt .
+COPY app/requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
-COPY --chown=ocruser:ocruser app/static ./static
-COPY --chown=ocruser:ocruser app/ .
+COPY app/static ./static
+COPY app/ .
 
 # 性能优化
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
     UVICORN_WORKERS=4
+	PATH="/home/ocruser/.local/bin:$PATH"
 
 EXPOSE 8000
 
