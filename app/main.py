@@ -55,6 +55,10 @@ class OCRProcessor:
         self.output_path = output_path
         self.websocket = websocket
         self.progress = 0
+
+    async def process(self):  # 注意这里的 self 参数
+        """类方法必须包含 self"""
+        print(f"Processing task: {self.task_id}")
         
     async def _update_progress(self, message: str, progress: int):
         """更新处理进度"""
@@ -145,7 +149,7 @@ async def progress_websocket(websocket: WebSocket):
         logger.info("WebSocket 连接断开")
 
 @app.post("/ocr")
-async def process_pdf(file: UploadFile = File(...), websocket: WebSocket = None):
+async def process_pdf(file: UploadFile = File(...)):
     """处理 PDF 文件上传"""
     # 验证文件类型
     if file.content_type != "application/pdf":
