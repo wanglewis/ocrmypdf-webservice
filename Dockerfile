@@ -3,9 +3,6 @@ FROM python:3.9-slim
 # 安装最小依赖集
 RUN apt-get update && apt-get install -y \
     ocrmypdf \  # 核心依赖
-    tesseract-ocr-eng \  # 英语
-    tesseract-ocr-deu \  # 德语
-    tesseract-ocr-chi-sim \  # 简体中文（保留）
     ghostscript \  # PDF处理
     poppler-utils \  # PDF工具
     && rm -rf /var/lib/apt/lists/*
