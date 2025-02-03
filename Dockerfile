@@ -31,8 +31,8 @@ RUN useradd -m -u 1000 ocruser && \
     mkdir -p /app/uploads && \
     chown -R ocruser:ocruser /app/uploads && \
     chmod 775 /app/uploads && \
-    mkdir -p /home/ocruser/.local && \        # 显式创建.local目录
-    chown -R ocruser:ocruser /home/ocruser    # 设置用户目录权限
+    mkdir -p /home/ocruser/.local && \        
+    chown -R ocruser:ocruser /home/ocruser    
 
 WORKDIR /app
 USER ocruser
