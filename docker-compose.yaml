@@ -1,18 +1,44 @@
 version: '3.8'
 
 services:
-  ocr-service:
-    build: .
-    environment:
-      OCR_ARGS: "-l eng+deu+chi_sim --rotate-pages --deskew --title 'Processed Document' --jobs 4 --output-type pdfa"
+  ocr-web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: ocr-web-service
     ports:
       - "8000:8000"
     volumes:
-      - ./output:/tmp/output  # 持久化输出目录
+      - ./input:/app/uploads  # 持久化上传目录
+      - ./config:/app/config:ro   # 配置文件挂载
+    environment:
+      - OCR_ARGS=-l eng+fra+chi_sim --rotate-pages --deskew --jobs 4 --output-type pdfa
+      - MAX_FILE_SIZE=104857600  # 100MB
+      - UVICORN_WORKERS=2
     deploy:
       resources:
         limits:
-          cpus: '4'  # 与 --jobs 4 匹配
+          cpus: '4'
+          memory: 2G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  output:
+  ocr_uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/ocr_uploads  # 宿主机存储路径
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
