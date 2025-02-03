@@ -2,21 +2,32 @@ FROM python:3.9-slim
 
 # 安装最小依赖集
 RUN apt-get update && apt-get install -y \
-    ocrmypdf \  # 核心依赖
-    ghostscript \  # PDF处理
-    poppler-utils \  # PDF工具
+    ocrmypdf \
+    tesseract-ocr-deu \
+    tesseract-ocr-chi-sim \
+    tesseract-ocr-eng \
+    ghostscript \ 
+    poppler-utils \ 
+	fonts-wqy-zenhei \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建非特权用户
-RUN useradd -m ocruser
-USER ocruser
+# 创建非root用户
+RUN useradd -m -u 1000 ocruser
 WORKDIR /app
+RUN chown ocruser:ocruser /app
 
-# 安装Python依赖
-COPY --chown=ocruser requirements.txt .
+USER ocruser
+
+COPY --chown=ocruser:ocruser app/requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
-# 复制应用代码
-COPY --chown=ocruser app/ .
+COPY --chown=ocruser:ocruser app/ .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0"]
+# 性能优化
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    UVICORN_WORKERS=4
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]
