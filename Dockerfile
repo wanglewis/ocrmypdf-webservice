@@ -1,3 +1,15 @@
+# 第一阶段：构建依赖
+FROM python:3.9-slim as builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
 # 第二阶段：运行时镜像
 FROM python:3.11-slim-bookworm
 
@@ -25,20 +37,16 @@ RUN useradd -m -u 1000 ocruser && \
 WORKDIR /app
 USER ocruser
 
-# 从构建阶段复制依赖并设置权限
+# 从构建阶段复制依赖（直接设置权限）
 COPY --from=builder --chown=ocruser:ocruser /root/.local /home/ocruser/.local
+
+# 设置环境变量
+ENV PATH="/home/ocruser/.local/bin:${PATH}" \
+    PYTHONPATH="/app"
 
 # 复制应用文件
 COPY --chown=ocruser:ocruser app/ ./app
-COPY --chown=ocruser:ocruser app/static/ ./static
-
-# 环境配置
-ENV PATH="/home/ocruser/.local/bin:${PATH}" \
-    PYTHONPATH=/app \
-    OCR_ARGS="-l eng+deu+chi_sim --rotate-pages --deskew --jobs 4 --output-type pdfa" \
-    UPLOAD_DIR=/app/uploads \
-    MAX_FILE_SIZE=52428800
+COPY --chown=ocruser:ocruser static/ ./static
 
 EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--loop", "uvloop"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
