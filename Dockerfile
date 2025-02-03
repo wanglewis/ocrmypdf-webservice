@@ -1,15 +1,3 @@
-# 第一阶段：构建依赖
-FROM python:3.11-slim-bookworm as builder
-
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-COPY app/requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
-
 # 第二阶段：运行时镜像
 FROM python:3.11-slim-bookworm
 
@@ -26,12 +14,12 @@ RUN apt-get update && apt-get install -y \
     libxcb-xinerama0 \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建应用用户和目录
+# 创建应用用户和目录（修复关键部分）
 RUN useradd -m -u 1000 ocruser && \
     mkdir -p /app/uploads && \
     chown -R ocruser:ocruser /app/uploads && \
     chmod 775 /app/uploads && \
-    mkdir -p /home/ocruser/.local && \  # 显式创建.local目录
+    mkdir -p /home/ocruser/.local && \
     chown -R ocruser:ocruser /home/ocruser
 
 WORKDIR /app
