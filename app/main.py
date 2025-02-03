@@ -43,8 +43,16 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 class OCRProcessor:
     """OCR 处理核心类"""
     
-    def __init__(self, task_id: str, websocket: Optional[WebSocket] = None):
+    def __init__(
+        self,
+        task_id: str,
+        input_path: Path,
+        output_path: Path,
+        websocket: Optional[WebSocket] = None
+    ):
         self.task_id = task_id
+        self.input_path = input_path
+        self.output_path = output_path
         self.websocket = websocket
         self.progress = 0
         
@@ -154,7 +162,13 @@ async def process_pdf(file: UploadFile = File(...), websocket: WebSocket = None)
     input_path = UPLOAD_DIR / f"{task_id}_input.pdf"
     output_path = UPLOAD_DIR / f"{task_id}_output.pdf"
     
+    # 保存文件到临时路径
+    with open(input_path, "wb") as f:
+        f.write(file_bytes)
+    logger.info(f"文件已保存至 {input_path}")
+    
     try:
+        # 创建 OCRProcessor 实例
         processor = OCRProcessor(
             task_id=task_id,
             input_path=input_path,
@@ -162,31 +176,17 @@ async def process_pdf(file: UploadFile = File(...), websocket: WebSocket = None)
             websocket=websocket
         )
         
-        success = await processor.process()
-        if not success:
-            raise HTTPException(500, "OCR处理失败")
-            
-        return FileResponse(...)    
-    
-    
-        # # 保存临时文件
-        # with open(input_path, "wb") as f:
-            # f.write(file_bytes)
-        # logger.info(f"文件已保存至 {input_path}")
+        # 执行 OCR 处理
+        await processor.process()
         
-        # # 执行OCR处理
-        # processor = OCRProcessor(task_id)
-        # await processor.process(input_path, output_path)
-        
-        # # 返回处理结果
-        # return FileResponse(
-            # output_path,
-            # media_type="application/pdf",
-            # headers={
-                # "Content-Disposition": "attachment; filename=processed.pdf",
-                # "X-Task-ID": task_id
-            # }
-        # )
+        # 返回处理后的文件
+        return FileResponse(
+            output_path,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename={task_id}_output.pdf"
+            }
+        )
         
     except Exception as e:
         logger.error(f"处理失败：{str(e)}")
