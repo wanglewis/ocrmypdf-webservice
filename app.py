@@ -77,7 +77,7 @@ def index():
             # ===== 新增 ocr_args 配置 =====
             ocr_args = [
                 'ocrmypdf',
-                '-l', 'eng+chi_sim',
+                '-l', 'eng+chi_sim+deu',
                 '--deskew',
                 '--skip-text',          # 跳过已有文本层
                 '--optimize', 3,        # 优化级别
