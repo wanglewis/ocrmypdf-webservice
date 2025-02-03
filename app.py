@@ -40,32 +40,19 @@ def save_upload(file, save_path):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # ===== 修改点1：提前获取文件对象 =====
-        upload_file = request.files.get('file')  # 使用 get 避免 KeyError
-        #upload_dir = None   初始化用于 finally 清理
-        # ===== 修改点2：统一错误处理流程 =====
-        if not upload_file or upload_file.filename == '':
-            app.logger.error("无效的文件上传请求")
-            return render_template('error.html', message="请选择有效的文件"), 400
-            
-        if not allowed_file(upload_file.filename):
-            return render_template('error.html', message="仅支持 PDF 文件"), 400
-            
-        # ===== 修改点3：确保单次请求处理 =====    
+        upload_dir = None  # 初始化用于 finally 清理
         try:
-            # === 基础验证 ===
-            if 'file' not in request.files:
-                app.logger.error("请求中未包含文件")
-                return 'No file uploaded', 400
-                
-            file = request.files['file']
-            if file.filename == '':
-                app.logger.error("文件名为空")
-                return 'No selected file', 400
-                
+            # ===== 单一入口获取文件对象 =====
+            file = request.files.get('file')  # 使用 get 替代直接访问
+            app.logger.info(f"收到上传请求，文件名: {file.filename if file else 'None'}")
+
+            # ===== 统一验证逻辑 =====
+            if not file or file.filename == '':
+                app.logger.error("无效的文件上传请求")
+                return render_template('error.html', message="请选择有效的文件"), 400
+
             if not allowed_file(file.filename):
-                app.logger.error("不允许的文件类型")
-                return 'Invalid file type', 400
+                return render_template('error.html', message="仅支持 PDF 文件"), 400
 
             # === 创建临时目录 ===
             upload_id = str(uuid.uuid4())
@@ -87,14 +74,29 @@ def index():
             output_path = os.path.abspath(os.path.join(upload_dir, 'output.pdf'))
             app.logger.info(f"开始处理: {original_path} → {output_path}")
 
+            # ===== 新增 ocr_args 配置 =====
+            ocr_args = [
+                'ocrmypdf',
+                '-l', 'eng+chi_sim',
+                '--deskew',
+                '--skip-text',          # 跳过已有文本层
+                '--optimize', 3,        # 优化级别
+                '--pdf-renderer', 'hocr',  # GPU加速渲染器
+                '--tesseract-oem', '1',    # LSTM引擎（GPU加速）
+                original_path,
+                output_path
+            ]
+
             # 执行 OCR 命令
             result = subprocess.run(
-                ['ocrmypdf', '-l', 'eng+chi_sim','--skip-text', '--deskew', original_path, output_path],
+                ocr_args,  # 使用配置好的参数列表
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                timeout=300  # 添加5分钟超时
             )
-            app.logger.debug(f"OCR输出: {result.stdout}")
+
+            app.logger.debug(f"OCR输出: {result.stdout[:200]}...")  # 截断长日志
 
             # 验证输出文件
             if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
@@ -119,19 +121,21 @@ def index():
                     
             return response
 
+        except subprocess.TimeoutExpired:
+            app.logger.error("处理超时")
+            return render_template('error.html', message="处理超时，请尝试减小文件尺寸"), 500
+            
         except subprocess.CalledProcessError as e:
-            error_msg = f"""OCR 处理失败！
-            命令: {e.cmd}
-            错误码: {e.returncode}
-            错误输出:
-            {e.stderr}
-            """
+            error_msg = f"""OCR 处理失败！<br>
+            命令: {' '.join(e.cmd)}<br>
+            错误码: {e.returncode}<br>
+            错误输出: {e.stderr[:500]}..."""
             app.logger.error(error_msg)
-            return error_msg, 500
+            return render_template('error.html', message=error_msg), 500
             
         except Exception as e:
             app.logger.error(f"处理异常: {str(e)}", exc_info=True)
-            return f"处理失败: {str(e)}", 500
+            return render_template('error.html', message=f"处理失败: {str(e)}"), 500
             
         finally:
             # 双保险清理（如果回调未执行）

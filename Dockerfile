@@ -1,35 +1,30 @@
 FROM python:3.11-slim
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
+# 系统依赖 (合并重复项并精简)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # OCR 核心依赖
     tesseract-ocr \
     tesseract-ocr-chi-sim \
     tesseract-ocr-eng \
+	tesseract-ocr-deu \
     ghostscript \
     poppler-utils \
-    intel-opencl-icd \         
-    intel-media-va-driver \    
-    vainfo \                   
-    clinfo \                   
-    ocl-icd-opencl-dev \       
-    libxml2-dev \
-    libxslt1-dev \
-    libleptonica-dev \
-    libjpeg-dev \
-    zlib1g-dev \
+    qpdf \
+    # 图像处理基础库
     libjpeg-dev \
     zlib1g-dev \
     libopenjp2-7-dev \
     libpng-dev \
-    qpdf \
+    # Intel GPU 加速支持
+    intel-opencl-icd \
+    intel-media-va-driver \
+    ocl-icd-opencl-dev \
+    # 文本处理库
+    libxml2-dev \
+    libxslt1-dev \
+    libleptonica-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 GPU 加速的 Tesseract
-RUN apt-get update && apt-get install -y \
-    libleptonica-dev \
-    libtesseract-dev \
-    tesseract-ocr-all && \
-    pip install pytesseract
 
 WORKDIR /app
 
