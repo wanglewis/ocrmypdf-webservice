@@ -176,8 +176,11 @@ async def process_pdf(file: UploadFile = File(...), websocket: WebSocket = None)
             websocket=websocket
         )
         
-        # 执行 OCR 处理
-        await processor.process()
+        # 正确调用（无参数）
+        success = await processor.process()
+
+        if not success:
+            raise HTTPException(500, "OCR处理失败")
         
         # 返回处理后的文件
         return FileResponse(

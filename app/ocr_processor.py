@@ -9,7 +9,6 @@ logger = logging.getLogger("ocr-processor")
 
 class OCRProcessor:
     """OCR 处理核心类"""
-    
     def __init__(
         self,
         task_id: str,
@@ -21,7 +20,6 @@ class OCRProcessor:
         self.input_path = input_path
         self.output_path = output_path
         self.websocket = websocket
-        self.progress = 0
 
     async def _send_progress_update(self, message: str, progress: int):
         """发送进度更新到WebSocket"""
@@ -67,10 +65,10 @@ class OCRProcessor:
 
         return await process.wait()
 
-    async def process(self):
-        """完整处理流程"""
+    async def process(self):  # 移除参数
+        """执行OCR处理（使用实例变量）"""
         try:
-            # 阶段1: 初始化处理
+            # 阶段1: 验证输入文件
             await self._send_progress_update("正在验证输入文件", 10)
             if not self.input_path.exists():
                 raise FileNotFoundError(f"输入文件 {self.input_path} 不存在")
