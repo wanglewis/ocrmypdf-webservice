@@ -21,6 +21,11 @@ middleware = [
 ]
 
 app = FastAPI(middleware=middleware)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def index():
+    return FileResponse("static/index.html")
 
 @app.websocket("/ws/progress/{task_id}")
 async def websocket_progress(websocket: WebSocket, task_id: str):
@@ -35,11 +40,9 @@ async def websocket_progress(websocket: WebSocket, task_id: str):
         logger.error(f"WebSocket 连接异常: {str(e)}")
         await websocket.close()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/")
-async def index():
-    return FileResponse("static/index.html")
+
+
 
 # 配置常量
 UPLOAD_DIR = "/tmp/uploads"
