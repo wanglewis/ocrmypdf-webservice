@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 COPY app/requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt  # 使用 --user 安装包到 /root/.local
+RUN pip install --user --no-cache-dir -r requirements.txt
 
 # 第二阶段：运行时镜像
 FROM python:3.11-slim-bookworm
@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y \
     ghostscript \
     poppler-utils \
     fonts-wqy-zenhei \
-    # 前端渲染依赖
     libgl1 \
     libxcb-xinerama0 \
     && rm -rf /var/lib/apt/lists/*
@@ -31,26 +30,27 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -m -u 1000 ocruser && \
     mkdir -p /app/uploads && \
     chown -R ocruser:ocruser /app/uploads && \
-    chmod 775 /app/uploads
-	
+    chmod 775 /app/uploads && \
+    mkdir -p /home/ocruser/.local && \  # 显式创建.local目录
+    chown -R ocruser:ocruser /home/ocruser
+
 WORKDIR /app
 USER ocruser
 
-# 从构建阶段复制依赖，并确保权限正确
-COPY --from=builder /root/.local /home/ocruser/.local
-RUN chown -R ocruser:ocruser /home/ocruser/.local
+# 从构建阶段复制依赖并设置权限
+COPY --from=builder --chown=ocruser:ocruser /root/.local /home/ocruser/.local
 
 # 复制应用文件
 COPY --chown=ocruser:ocruser app/ ./app
 COPY --chown=ocruser:ocruser app/static/ ./static
 
 # 环境配置
-ENV PYTHONPATH=/app \
-    OCR_ARGS="-l eng+fra+chi_sim --rotate-pages --deskew --jobs 4 --output-type pdfa" \
+ENV PATH="/home/ocruser/.local/bin:${PATH}" \
+    PYTHONPATH=/app \
+    OCR_ARGS="-l eng+deu+chi_sim --rotate-pages --deskew --jobs 4 --output-type pdfa" \
     UPLOAD_DIR=/app/uploads \
     MAX_FILE_SIZE=52428800
 
 EXPOSE 8000
 
-# 使用高性能 ASGI 服务器
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--loop", "uvloop"]
