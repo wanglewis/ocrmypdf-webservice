@@ -1,0 +1,137 @@
+<!-- app/static/index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>在线OCR PDF处理</title>
+    <style>
+        body {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            font-family: -apple-system, sans-serif;
+        }
+        .upload-box {
+            border: 2px dashed #ccc;
+            padding: 3rem;
+            text-align: center;
+            border-radius: 1rem;
+            margin: 2rem 0;
+        }
+        #progress {
+            display: none;
+            margin: 1rem 0;
+            color: #666;
+        }
+        #result {
+            margin-top: 2rem;
+            display: none;
+        }
+		.progress-bar {
+			width: 100%;
+			height: 20px;
+			background-color: #eee;
+			border-radius: 10px;
+			margin: 1rem 0;
+		}
+		.progress-fill {
+			height: 100%;
+			background-color: #4CAF50;
+			border-radius: 10px;
+			transition: width 0.3s ease;
+		}
+    </style>
+</head>
+<body>
+    <h1>OCR PDF 在线处理</h1>
+    
+    <div class="upload-box" id="dropZone">
+        <p>拖放 PDF 文件至此区域 或</p>
+        <input type="file" id="fileInput" accept=".pdf">
+    </div>
+
+    <div id="progress">正在处理中，请稍候...</div>
+	<div class="progress-bar">
+		<div class="progress-fill" id="progressBar" style="width: 0%"></div>
+	</div>
+    <div id="result">
+        <a id="downloadLink" download="processed.pdf">点击下载处理后的文件</a>
+        <iframe id="preview" width="100%" height="600px"></iframe>
+    </div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const progress = document.getElementById('progress');
+        const result = document.getElementById('result');
+        const downloadLink = document.getElementById('downloadLink');
+        const preview = document.getElementById('preview');
+
+		let ws = null;
+
+		async function handleFile(file) {
+			// 生成唯一任务ID
+			const taskId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+			
+			// 连接 WebSocket
+			ws = new WebSocket(`ws://${window.location.host}/ws/progress/${taskId}`);
+			
+			ws.onmessage = (event) => {
+				const data = JSON.parse(event.data);
+				document.getElementById('progressBar').style.width = data.percentage + '%';
+				document.getElementById('progress').textContent = data.message;
+			};
+
+        // 处理文件选择
+        async function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('仅支持 PDF 文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                progress.style.display = 'block';
+                const response = await fetch('/ocr', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('处理失败');
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                downloadLink.href = url;
+                preview.src = url;
+                result.style.display = 'block';
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                progress.style.display = 'none';
+            }
+        }
+
+        // 拖放事件处理
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#f8f9fa';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '';
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        // 文件选择事件
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+    </script>
+</body>
+</html>

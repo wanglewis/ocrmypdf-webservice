@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# 安装语言包
+RUN apt-get install -y tesseract-ocr-all
+
 # 设定工作目录
 WORKDIR /app
 
@@ -20,6 +23,7 @@ COPY app/requirements.txt .
 RUN pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
 
 # 复制应用代码
+COPY app/static ./static
 COPY app/ .
 
 # 设置 Python 运行环境
