@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y \
     libleptonica-dev \
     libjpeg-dev \
     zlib1g-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libopenjp2-7-dev \
+    libpng-dev \
     qpdf \
     && rm -rf /var/lib/apt/lists/*
 
