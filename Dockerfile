@@ -1,7 +1,6 @@
-# 使用官方 Python 精简镜像
+# 第一阶段：构建依赖
 FROM python:3.11-slim-bookworm as builder
 
-# 第一阶段：构建依赖
 RUN apt-get update && apt-get install -y \
     build-essential \
     libssl-dev \
@@ -9,7 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --user --no-cache-dir -r requirements.txt  # 使用 --user 安装包到 /root/.local
 
 # 第二阶段：运行时镜像
 FROM python:3.11-slim-bookworm
