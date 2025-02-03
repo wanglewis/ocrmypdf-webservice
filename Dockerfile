@@ -5,14 +5,8 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-chi-sim \
     tesseract-ocr-eng \
-	tesseract-ocr-deu	\
     ghostscript \
     poppler-utils \
-    intel-opencl-icd \         
-    intel-media-va-driver \    
-    vainfo \                   
-    clinfo \                   
-    ocl-icd-opencl-dev \       
     libxml2-dev \
     libxslt1-dev \
     libleptonica-dev \
@@ -23,16 +17,7 @@ RUN apt-get update && apt-get install -y \
     libopenjp2-7-dev \
     libpng-dev \
     qpdf \
-	pngquant \
-	unpaper \
     && rm -rf /var/lib/apt/lists/*
-
-# 安装 GPU 加速的 Tesseract
-RUN apt-get update && apt-get install -y \
-    libleptonica-dev \
-    libtesseract-dev \
-    tesseract-ocr-all && \
-    pip install pytesseract
 
 WORKDIR /app
 
