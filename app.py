@@ -33,7 +33,21 @@ def index():
             
             # 保存原始文件
             original_path = os.path.join(upload_dir, secure_filename(file.filename))
+
+            # 在文件保存代码后添加验证
             file.save(original_path)
+
+            # 新增文件存在性检查
+            if not os.path.exists(original_path):
+                app.logger.error(f"文件保存失败，路径：{original_path}")
+                return "文件保存失败，请检查存储权限", 500
+
+            # 新增文件大小验证
+            file_size = os.path.getsize(original_path)
+            if file_size == 0:
+                app.logger.error(f"空文件警告，原始文件大小：{file_size} 字节")
+                return "上传的文件内容为空", 400
+
             
             # 处理文件
             output_path = os.path.join(upload_dir, 'output.pdf')
