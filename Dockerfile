@@ -7,6 +7,11 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr-eng \
     ghostscript \
     poppler-utils \
+    intel-opencl-icd \         
+    intel-media-va-driver \    
+    vainfo \                   
+    clinfo \                   
+    ocl-icd-opencl-dev \       
     libxml2-dev \
     libxslt1-dev \
     libleptonica-dev \
@@ -18,6 +23,13 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     qpdf \
     && rm -rf /var/lib/apt/lists/*
+
+# 安装 GPU 加速的 Tesseract
+RUN apt-get update && apt-get install -y \
+    libleptonica-dev \
+    libtesseract-dev \
+    tesseract-ocr-all && \
+    pip install pytesseract
 
 WORKDIR /app
 
@@ -33,6 +45,8 @@ RUN mkdir -p /tmp/uploads && \
 	
 	
 ENV OCRMYPDF_DISABLE_DOCKER=1  
+ENV LIBVA_DRIVER_NAME=iHD
+ENV INTEL_OPENCL_ALLOW_CPU=0 
 
 EXPOSE 5000
 
